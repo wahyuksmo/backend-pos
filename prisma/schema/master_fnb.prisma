@@ -1,0 +1,171 @@
+// Master F&B Enterprise Schema
+// Tables: pos_unit_conversions, pos_kitchen_stations, pos_product_recipes,
+//         pos_surcharges, pos_sales_channels, pos_combo_groups, pos_combo_items
+
+model PosUnitConversion {
+  conversionId String   @id @default(uuid()) @map("conversion_id") @db.Uuid
+  fromUnitId   String   @map("from_unit_id") @db.Uuid
+  toUnitId     String   @map("to_unit_id") @db.Uuid
+  multiplier   Decimal  @default(1) @map("multiplier") @db.Decimal(12, 4)
+
+  isActive     String   @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode   String   @default("UNIT_CONVERSION") @map("object_code") @db.VarChar
+  createdBy    String?  @map("created_by") @db.VarChar
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy    String?  @map("updated_by") @db.VarChar
+
+  fromUnit     PosUnit  @relation("UnitConversionFrom", fields: [fromUnitId], references: [unitId], onDelete: Cascade)
+  toUnit       PosUnit  @relation("UnitConversionTo", fields: [toUnitId], references: [unitId], onDelete: Cascade)
+
+  @@unique([fromUnitId, toUnitId])
+  @@index([fromUnitId])
+  @@index([toUnitId])
+  @@map("pos_unit_conversions")
+}
+
+model PosKitchenStation {
+  stationId    String        @id @default(uuid()) @map("station_id") @db.Uuid
+  outletId     String        @map("outlet_id") @db.Uuid
+  stationCode  String        @map("station_code") @db.VarChar
+  stationName  String        @map("station_name") @db.VarChar
+  printerType  String        @default("NETWORK") @map("printer_type") @db.VarChar
+  printerIp    String?       @map("printer_ip") @db.VarChar
+  printerPort  Int           @default(9100) @map("printer_port")
+  isKdsEnabled String        @default("N") @map("is_kds_enabled") @db.VarChar(1)
+
+  isActive     String        @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode   String        @default("KITCHEN_STATION") @map("object_code") @db.VarChar
+  createdBy    String?       @map("created_by") @db.VarChar
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at")
+  updatedBy    String?       @map("updated_by") @db.VarChar
+
+  outlet       PosOutlet     @relation(fields: [outletId], references: [outletId], onDelete: Cascade)
+  products     PosProduct[]
+  categories   PosCategory[]
+  orderItems   PosOrderItem[]
+
+  @@unique([outletId, stationCode])
+  @@index([outletId])
+  @@map("pos_kitchen_stations")
+}
+
+model PosProductRecipe {
+  recipeId            String             @id @default(uuid()) @map("recipe_id") @db.Uuid
+  productId           String             @map("product_id") @db.Uuid
+  variantId           String?            @map("variant_id") @db.Uuid
+  ingredientProductId String             @map("ingredient_product_id") @db.Uuid
+  unitId              String             @map("unit_id") @db.Uuid
+  quantity            Decimal            @default(0) @map("quantity") @db.Decimal(12, 4)
+  wastagePercent      Decimal            @default(0) @map("wastage_percent") @db.Decimal(5, 2)
+  costPrice           Decimal            @default(0) @map("cost_price") @db.Decimal(15, 2)
+
+  isActive            String             @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode          String             @default("RECIPE") @map("object_code") @db.VarChar
+  createdBy           String?            @map("created_by") @db.VarChar
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @default(now()) @updatedAt @map("updated_at")
+  updatedBy           String?            @map("updated_by") @db.VarChar
+
+  product             PosProduct         @relation("ProductRecipeParent", fields: [productId], references: [productId], onDelete: Cascade)
+  variant             PosProductVariant? @relation(fields: [variantId], references: [variantId], onDelete: Cascade)
+  ingredientProduct   PosProduct         @relation("ProductRecipeIngredient", fields: [ingredientProductId], references: [productId], onDelete: Restrict)
+  unit                PosUnit            @relation(fields: [unitId], references: [unitId], onDelete: Restrict)
+
+  @@index([productId])
+  @@index([ingredientProductId])
+  @@map("pos_product_recipes")
+}
+
+model PosSurcharge {
+  surchargeId         String     @id @default(uuid()) @map("surcharge_id") @db.Uuid
+  outletId            String?    @map("outlet_id") @db.Uuid
+  surchargeCode       String     @unique @map("surcharge_code") @db.VarChar
+  surchargeName       String     @map("surcharge_name") @db.VarChar
+  surchargeType       String     @default("PERCENTAGE") @map("surcharge_type") @db.VarChar
+  rateValue           Decimal    @default(0) @map("rate_value") @db.Decimal(15, 2)
+  isTaxable           String     @default("Y") @map("is_taxable") @db.VarChar(1)
+  applicableOrderType String     @default("ALL") @map("applicable_order_type") @db.VarChar
+
+  isActive            String     @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode          String     @default("SURCHARGE") @map("object_code") @db.VarChar
+  createdBy           String?    @map("created_by") @db.VarChar
+  createdAt           DateTime   @default(now()) @map("created_at")
+  updatedAt           DateTime   @default(now()) @updatedAt @map("updated_at")
+  updatedBy           String?    @map("updated_by") @db.VarChar
+
+  outlet              PosOutlet? @relation(fields: [outletId], references: [outletId], onDelete: Cascade)
+
+  @@index([surchargeCode])
+  @@index([outletId])
+  @@map("pos_surcharges")
+}
+
+model PosSalesChannel {
+  channelId                 String   @id @default(uuid()) @map("channel_id") @db.Uuid
+  channelCode               String   @unique @map("channel_code") @db.VarChar
+  channelName               String   @map("channel_name") @db.VarChar
+  orderType                 String   @default("DINE_IN") @map("order_type") @db.VarChar
+  priceMarkupPercent        Decimal  @default(0) @map("price_markup_percent") @db.Decimal(5, 2)
+  platformCommissionPercent Decimal  @default(0) @map("platform_commission_percent") @db.Decimal(5, 2)
+  autoAcceptOrder           String   @default("N") @map("auto_accept_order") @db.VarChar(1)
+
+  isActive                  String   @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode                String   @default("SALES_CHANNEL") @map("object_code") @db.VarChar
+  createdBy                 String?  @map("created_by") @db.VarChar
+  createdAt                 DateTime @default(now()) @map("created_at")
+  updatedAt                 DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy                 String?  @map("updated_by") @db.VarChar
+
+  orders                    PosOrder[]
+
+  @@index([channelCode])
+  @@map("pos_sales_channels")
+}
+
+model PosComboGroup {
+  comboGroupId String         @id @default(uuid()) @map("combo_group_id") @db.Uuid
+  productId    String         @map("product_id") @db.Uuid
+  groupName    String         @map("group_name") @db.VarChar
+  minSelect    Int            @default(1) @map("min_select")
+  maxSelect    Int            @default(1) @map("max_select")
+  isRequired   String         @default("Y") @map("is_required") @db.VarChar(1)
+
+  isActive     String         @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode   String         @default("COMBO_GROUP") @map("object_code") @db.VarChar
+  createdBy    String?        @map("created_by") @db.VarChar
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at")
+  updatedBy    String?        @map("updated_by") @db.VarChar
+
+  product      PosProduct     @relation(fields: [productId], references: [productId], onDelete: Cascade)
+  items        PosComboItem[]
+
+  @@index([productId])
+  @@map("pos_combo_groups")
+}
+
+model PosComboItem {
+  comboItemId   String             @id @default(uuid()) @map("combo_item_id") @db.Uuid
+  comboGroupId  String             @map("combo_group_id") @db.Uuid
+  itemProductId String             @map("item_product_id") @db.Uuid
+  itemVariantId String?            @map("item_variant_id") @db.Uuid
+  extraPrice    Decimal            @default(0) @map("extra_price") @db.Decimal(15, 2)
+  isDefault     String             @default("N") @map("is_default") @db.VarChar(1)
+
+  isActive      String             @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode    String             @default("COMBO_ITEM") @map("object_code") @db.VarChar
+  createdBy     String?            @map("created_by") @db.VarChar
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @default(now()) @updatedAt @map("updated_at")
+  updatedBy     String?            @map("updated_by") @db.VarChar
+
+  comboGroup    PosComboGroup      @relation(fields: [comboGroupId], references: [comboGroupId], onDelete: Cascade)
+  itemProduct   PosProduct         @relation(fields: [itemProductId], references: [productId], onDelete: Restrict)
+  itemVariant   PosProductVariant? @relation(fields: [itemVariantId], references: [variantId], onDelete: SetNull)
+
+  @@index([comboGroupId])
+  @@index([itemProductId])
+  @@map("pos_combo_items")
+}

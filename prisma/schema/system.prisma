@@ -1,0 +1,37 @@
+// System Configuration & Registry Schema
+// Tables: pos_objects, pos_settings
+
+model SystemObject {
+  objectId     String   @id @default(uuid()) @map("object_id") @db.Uuid
+  menuId       String?  @map("menu_id") @db.Uuid
+  objectCode   String   @unique @map("object_code") @db.VarChar
+  tableName    String   @map("table_name") @db.VarChar
+  description  String?  @map("description") @db.VarChar
+  isAuditable  String   @default("Y") @map("is_auditable") @db.VarChar
+  isApprovable String   @default("N") @map("is_approvable") @db.VarChar
+  isActive     String   @default("Y") @map("is_active") @db.VarChar
+  createdBy    String?  @map("created_by") @db.VarChar
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy    String?  @map("updated_by") @db.VarChar
+
+  menu Menu? @relation(fields: [menuId], references: [menuId], onDelete: SetNull)
+
+  @@index([menuId])
+  @@map("pos_objects")
+}
+
+model Setting {
+  settingId    String   @id @default(uuid()) @map("setting_id") @db.Uuid
+  settingKey   String   @unique @map("setting_key") @db.VarChar
+  settingValue String   @map("setting_value") @db.Text
+  valueType    String   @default("string") @map("value_type") @db.VarChar
+  description  String?  @map("description") @db.VarChar
+  objectCode   String   @default("SETTING") @map("object_code") @db.VarChar
+  createdBy    String?  @map("created_by") @db.VarChar
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy    String?  @map("updated_by") @db.VarChar
+
+  @@map("pos_settings")
+}

@@ -1,0 +1,66 @@
+// Production & Manufacturing Schema
+// Tables: pos_productions, pos_production_materials
+
+model PosProduction {
+  productionId      String                  @id @default(uuid()) @map("production_id") @db.Uuid
+  productionNumber  String                  @unique @map("production_number") @db.VarChar
+  warehouseId       String                  @map("warehouse_id") @db.Uuid
+  productId         String                  @map("product_id") @db.Uuid
+  variantId         String?                 @map("variant_id") @db.Uuid
+  productionDate    DateTime                @default(now()) @map("production_date")
+  targetQuantity    Decimal                 @default(1) @map("target_quantity") @db.Decimal(15, 4)
+  actualQuantity    Decimal                 @default(1) @map("actual_quantity") @db.Decimal(15, 4)
+  unitId            String?                 @map("unit_id") @db.Uuid
+  status            String                  @default("COMPLETED") @map("status") @db.VarChar(20) // DRAFT, COMPLETED, CANCELLED
+  totalMaterialCost Decimal                 @default(0) @map("total_material_cost") @db.Decimal(15, 2)
+  costPerUnit       Decimal                 @default(0) @map("cost_per_unit") @db.Decimal(15, 2)
+  notes             String?                 @map("notes") @db.Text
+
+  isActive          String                  @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode        String                  @default("PRODUCTION") @map("object_code") @db.VarChar
+  createdBy         String?                 @map("created_by") @db.VarChar
+  createdAt         DateTime                @default(now()) @map("created_at")
+  updatedAt         DateTime                @default(now()) @updatedAt @map("updated_at")
+  updatedBy         String?                 @map("updated_by") @db.VarChar
+
+  warehouse         PosWarehouse            @relation("WarehouseProductions", fields: [warehouseId], references: [warehouseId], onDelete: Restrict)
+  product           PosProduct              @relation("ProductionTargetProduct", fields: [productId], references: [productId], onDelete: Restrict)
+  variant           PosProductVariant?      @relation("ProductionTargetVariant", fields: [variantId], references: [variantId], onDelete: SetNull)
+  unit              PosUnit?                @relation("ProductionTargetUnit", fields: [unitId], references: [unitId], onDelete: SetNull)
+  materials         PosProductionMaterial[]
+
+  @@index([warehouseId])
+  @@index([productId])
+  @@index([status])
+  @@index([productionDate])
+  @@map("pos_productions")
+}
+
+model PosProductionMaterial {
+  materialId        String             @id @default(uuid()) @map("material_id") @db.Uuid
+  productionId      String             @map("production_id") @db.Uuid
+  productId         String             @map("product_id") @db.Uuid
+  variantId         String?            @map("variant_id") @db.Uuid
+  unitId            String?            @map("unit_id") @db.Uuid
+  bomQuantity       Decimal            @default(0) @map("bom_quantity") @db.Decimal(15, 4)
+  actualQuantity    Decimal            @default(0) @map("actual_quantity") @db.Decimal(15, 4)
+  costPrice         Decimal            @default(0) @map("cost_price") @db.Decimal(15, 2)
+  subtotalCost      Decimal            @default(0) @map("subtotal_cost") @db.Decimal(15, 2)
+  notes             String?            @map("notes") @db.VarChar(255)
+
+  isActive          String             @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode        String             @default("PRODUCTION_MATERIAL") @map("object_code") @db.VarChar
+  createdBy         String?            @map("created_by") @db.VarChar
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at")
+  updatedBy         String?            @map("updated_by") @db.VarChar
+
+  production        PosProduction      @relation(fields: [productionId], references: [productionId], onDelete: Cascade)
+  product           PosProduct         @relation("ProductionMaterialProduct", fields: [productId], references: [productId], onDelete: Restrict)
+  variant           PosProductVariant? @relation("ProductionMaterialVariant", fields: [variantId], references: [variantId], onDelete: SetNull)
+  unit              PosUnit?           @relation("ProductionMaterialUnit", fields: [unitId], references: [unitId], onDelete: SetNull)
+
+  @@index([productionId])
+  @@index([productId])
+  @@map("pos_production_materials")
+}

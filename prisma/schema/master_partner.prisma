@@ -1,0 +1,74 @@
+// Master CRM & Procurement Schema
+// Tables: pos_customer_groups, pos_customers, pos_suppliers
+
+model PosCustomerGroup {
+  customerGroupId String        @id @default(uuid()) @map("customer_group_id") @db.Uuid
+  groupCode       String        @unique @map("group_code") @db.VarChar
+  groupName       String        @map("group_name") @db.VarChar
+  discountPercent Decimal       @default(0) @map("discount_percent") @db.Decimal(5, 2)
+  description     String?       @map("description") @db.VarChar
+
+  isActive        String        @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode      String        @default("CUSTOMER_GROUP") @map("object_code") @db.VarChar
+  createdBy       String?       @map("created_by") @db.VarChar
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @default(now()) @updatedAt @map("updated_at")
+  updatedBy       String?       @map("updated_by") @db.VarChar
+
+  customers       PosCustomer[]
+
+  @@index([groupCode])
+  @@map("pos_customer_groups")
+}
+
+model PosCustomer {
+  customerId      String            @id @default(uuid()) @map("customer_id") @db.Uuid
+  customerGroupId String?           @map("customer_group_id") @db.Uuid
+  customerCode    String            @unique @map("customer_code") @db.VarChar
+  customerName    String            @map("customer_name") @db.VarChar
+  phone           String?           @map("phone") @db.VarChar
+  email           String?           @map("email") @db.VarChar
+  address         String?           @map("address") @db.Text
+  loyaltyPoints   Decimal           @default(0) @map("loyalty_points") @db.Decimal(12, 2)
+  creditLimit     Decimal           @default(0) @map("credit_limit") @db.Decimal(15, 2)
+
+  isActive        String            @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode      String            @default("CUSTOMER") @map("object_code") @db.VarChar
+  createdBy       String?           @map("created_by") @db.VarChar
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @default(now()) @updatedAt @map("updated_at")
+  updatedBy       String?           @map("updated_by") @db.VarChar
+
+  customerGroup   PosCustomerGroup? @relation(fields: [customerGroupId], references: [customerGroupId], onDelete: SetNull)
+  orders          PosOrder[]
+
+  @@index([customerCode])
+  @@index([phone])
+  @@index([customerGroupId])
+  @@map("pos_customers")
+}
+
+model PosSupplier {
+  supplierId        String   @id @default(uuid()) @map("supplier_id") @db.Uuid
+  supplierCode      String   @unique @map("supplier_code") @db.VarChar
+  supplierName      String   @map("supplier_name") @db.VarChar
+  contactPerson     String?  @map("contact_person") @db.VarChar
+  phone             String?  @map("phone") @db.VarChar
+  email             String?  @map("email") @db.VarChar
+  address           String?  @map("address") @db.Text
+  taxNumber         String?  @map("tax_number") @db.VarChar
+  bankName          String?  @map("bank_name") @db.VarChar
+  bankAccountNo     String?  @map("bank_account_no") @db.VarChar
+  bankAccountHolder String?  @map("bank_account_holder") @db.VarChar
+  paymentTermDays   Int      @default(0) @map("payment_term_days")
+
+  isActive          String   @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode        String   @default("SUPPLIER") @map("object_code") @db.VarChar
+  createdBy         String?  @map("created_by") @db.VarChar
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy         String?  @map("updated_by") @db.VarChar
+
+  @@index([supplierCode])
+  @@map("pos_suppliers")
+}

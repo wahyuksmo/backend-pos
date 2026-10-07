@@ -1,0 +1,165 @@
+// Inventory & Stock Management Schema
+// Tables: pos_stocks, pos_stock_movements, pos_stock_transfers, pos_stock_transfer_items, pos_stock_adjustments, pos_stock_adjustment_items
+
+model PosStock {
+  stockId          String             @id @default(uuid()) @map("stock_id") @db.Uuid
+  warehouseId      String             @map("warehouse_id") @db.Uuid
+  productId        String             @map("product_id") @db.Uuid
+  variantId        String?            @map("variant_id") @db.Uuid
+  quantity         Decimal            @default(0) @map("quantity") @db.Decimal(15, 4)
+  reservedQuantity Decimal            @default(0) @map("reserved_quantity") @db.Decimal(15, 4)
+  minStock         Decimal            @default(0) @map("min_stock") @db.Decimal(15, 4)
+  maxStock         Decimal            @default(0) @map("max_stock") @db.Decimal(15, 4)
+
+  isActive         String             @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode       String             @default("STOCK") @map("object_code") @db.VarChar
+  createdBy        String?            @map("created_by") @db.VarChar
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @default(now()) @updatedAt @map("updated_at")
+  updatedBy        String?            @map("updated_by") @db.VarChar
+
+  warehouse        PosWarehouse       @relation(fields: [warehouseId], references: [warehouseId], onDelete: Cascade)
+  product          PosProduct         @relation(fields: [productId], references: [productId], onDelete: Cascade)
+  variant          PosProductVariant? @relation(fields: [variantId], references: [variantId], onDelete: Cascade)
+
+  @@unique([warehouseId, productId, variantId])
+  @@index([warehouseId])
+  @@index([productId])
+  @@map("pos_stocks")
+}
+
+model PosStockMovement {
+  movementId      String             @id @default(uuid()) @map("movement_id") @db.Uuid
+  warehouseId     String             @map("warehouse_id") @db.Uuid
+  productId       String             @map("product_id") @db.Uuid
+  variantId       String?            @map("variant_id") @db.Uuid
+  movementType    String             @map("movement_type") @db.VarChar(20) // IN, OUT, ADJUSTMENT, TRANSFER_IN, TRANSFER_OUT, SALE_DEDUCT, VOID_RESTOCK
+  referenceType   String             @map("reference_type") @db.VarChar(30) // ORDER, ADJUSTMENT, TRANSFER, MANUAL, VOID
+  referenceId     String?            @map("reference_id") @db.VarChar(50)
+  referenceNumber String?            @map("reference_number") @db.VarChar(100)
+  quantity        Decimal            @default(0) @map("quantity") @db.Decimal(15, 4)
+  balanceBefore   Decimal            @default(0) @map("balance_before") @db.Decimal(15, 4)
+  balanceAfter    Decimal            @default(0) @map("balance_after") @db.Decimal(15, 4)
+  notes           String?            @map("notes") @db.Text
+
+  isActive        String             @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode      String             @default("STOCK_MOVEMENT") @map("object_code") @db.VarChar
+  createdBy       String?            @map("created_by") @db.VarChar
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @default(now()) @updatedAt @map("updated_at")
+  updatedBy       String?            @map("updated_by") @db.VarChar
+
+  warehouse       PosWarehouse       @relation(fields: [warehouseId], references: [warehouseId], onDelete: Cascade)
+  product         PosProduct         @relation(fields: [productId], references: [productId], onDelete: Cascade)
+  variant         PosProductVariant? @relation(fields: [variantId], references: [variantId], onDelete: Cascade)
+
+  @@index([warehouseId])
+  @@index([productId])
+  @@index([movementType])
+  @@index([referenceType])
+  @@index([referenceNumber])
+  @@index([createdAt])
+  @@map("pos_stock_movements")
+}
+
+model PosStockTransfer {
+  transferId      String               @id @default(uuid()) @map("transfer_id") @db.Uuid
+  transferNumber  String               @unique @map("transfer_number") @db.VarChar
+  fromWarehouseId String               @map("from_warehouse_id") @db.Uuid
+  toWarehouseId   String               @map("to_warehouse_id") @db.Uuid
+  transferDate    DateTime             @default(now()) @map("transfer_date")
+  status          String               @default("PENDING") @map("status") @db.VarChar(20) // PENDING, APPROVED, SHIPPED, RECEIVED, CANCELLED
+  notes           String?              @map("notes") @db.Text
+
+  isActive        String               @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode      String               @default("STOCK_TRANSFER") @map("object_code") @db.VarChar
+  createdBy       String?              @map("created_by") @db.VarChar
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @default(now()) @updatedAt @map("updated_at")
+  updatedBy       String?              @map("updated_by") @db.VarChar
+
+  fromWarehouse   PosWarehouse         @relation("TransferFromWarehouse", fields: [fromWarehouseId], references: [warehouseId], onDelete: Restrict)
+  toWarehouse     PosWarehouse         @relation("TransferToWarehouse", fields: [toWarehouseId], references: [warehouseId], onDelete: Restrict)
+  items           PosStockTransferItem[]
+
+  @@index([fromWarehouseId])
+  @@index([toWarehouseId])
+  @@index([status])
+  @@map("pos_stock_transfers")
+}
+
+model PosStockTransferItem {
+  transferItemId   String             @id @default(uuid()) @map("transfer_item_id") @db.Uuid
+  transferId       String             @map("transfer_id") @db.Uuid
+  productId        String             @map("product_id") @db.Uuid
+  variantId        String?            @map("variant_id") @db.Uuid
+  quantity         Decimal            @default(0) @map("quantity") @db.Decimal(15, 4)
+  receivedQuantity Decimal            @default(0) @map("received_quantity") @db.Decimal(15, 4)
+  notes            String?            @map("notes") @db.VarChar(255)
+
+  isActive         String             @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode       String             @default("STOCK_TRANSFER_ITEM") @map("object_code") @db.VarChar
+  createdBy        String?            @map("created_by") @db.VarChar
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @default(now()) @updatedAt @map("updated_at")
+  updatedBy        String?            @map("updated_by") @db.VarChar
+
+  transfer         PosStockTransfer   @relation(fields: [transferId], references: [transferId], onDelete: Cascade)
+  product          PosProduct         @relation(fields: [productId], references: [productId], onDelete: Restrict)
+  variant          PosProductVariant? @relation(fields: [variantId], references: [variantId], onDelete: Cascade)
+
+  @@index([transferId])
+  @@index([productId])
+  @@map("pos_stock_transfer_items")
+}
+
+model PosStockAdjustment {
+  adjustmentId     String                 @id @default(uuid()) @map("adjustment_id") @db.Uuid
+  adjustmentNumber String                 @unique @map("adjustment_number") @db.VarChar
+  warehouseId      String                 @map("warehouse_id") @db.Uuid
+  adjustmentDate   DateTime               @default(now()) @map("adjustment_date")
+  reason           String                 @default("OPNAME") @map("reason") @db.VarChar(50) // OPNAME, DAMAGED, EXPIRED, LOST, OTHER
+  status           String                 @default("APPROVED") @map("status") @db.VarChar(20) // DRAFT, APPROVED, REJECTED
+  notes            String?                @map("notes") @db.Text
+
+  isActive         String                 @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode       String                 @default("STOCK_ADJUSTMENT") @map("object_code") @db.VarChar
+  createdBy        String?                @map("created_by") @db.VarChar
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @default(now()) @updatedAt @map("updated_at")
+  updatedBy        String?                @map("updated_by") @db.VarChar
+
+  warehouse        PosWarehouse           @relation(fields: [warehouseId], references: [warehouseId], onDelete: Restrict)
+  items            PosStockAdjustmentItem[]
+
+  @@index([warehouseId])
+  @@index([status])
+  @@index([reason])
+  @@map("pos_stock_adjustments")
+}
+
+model PosStockAdjustmentItem {
+  adjustmentItemId   String             @id @default(uuid()) @map("adjustment_item_id") @db.Uuid
+  adjustmentId       String             @map("adjustment_id") @db.Uuid
+  productId          String             @map("product_id") @db.Uuid
+  variantId          String?            @map("variant_id") @db.Uuid
+  systemQuantity     Decimal            @default(0) @map("system_quantity") @db.Decimal(15, 4)
+  actualQuantity     Decimal            @default(0) @map("actual_quantity") @db.Decimal(15, 4)
+  differenceQuantity Decimal            @default(0) @map("difference_quantity") @db.Decimal(15, 4)
+  notes              String?            @map("notes") @db.VarChar(255)
+
+  isActive           String             @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode         String             @default("STOCK_ADJUSTMENT_ITEM") @map("object_code") @db.VarChar
+  createdBy          String?            @map("created_by") @db.VarChar
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @default(now()) @updatedAt @map("updated_at")
+  updatedBy          String?            @map("updated_by") @db.VarChar
+
+  adjustment         PosStockAdjustment @relation(fields: [adjustmentId], references: [adjustmentId], onDelete: Cascade)
+  product            PosProduct         @relation(fields: [productId], references: [productId], onDelete: Restrict)
+  variant            PosProductVariant? @relation(fields: [variantId], references: [variantId], onDelete: Cascade)
+
+  @@index([adjustmentId])
+  @@index([productId])
+  @@map("pos_stock_adjustment_items")
+}

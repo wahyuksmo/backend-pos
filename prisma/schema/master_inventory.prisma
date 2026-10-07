@@ -1,0 +1,56 @@
+// Master Inventory Schema: Warehouses & Units (UOM)
+// Tables: pos_warehouses, pos_units
+
+model PosWarehouse {
+  warehouseId   String     @id @default(uuid()) @map("warehouse_id") @db.Uuid
+  outletId      String?    @map("outlet_id") @db.Uuid
+  warehouseCode String     @unique @map("warehouse_code") @db.VarChar
+  warehouseName String     @map("warehouse_name") @db.VarChar
+  warehouseType String     @default("GENERAL") @map("warehouse_type") @db.VarChar
+  address       String?    @map("address") @db.Text
+  isDefault     String     @default("N") @map("is_default") @db.VarChar(1)
+
+  isActive      String     @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode    String     @default("WAREHOUSE") @map("object_code") @db.VarChar
+  createdBy     String?    @map("created_by") @db.VarChar
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @default(now()) @updatedAt @map("updated_at")
+  updatedBy     String?    @map("updated_by") @db.VarChar
+
+  outlet        PosOutlet? @relation(fields: [outletId], references: [outletId], onDelete: SetNull)
+
+  stocks        PosStock[]
+  stockMovements PosStockMovement[]
+  transfersFrom PosStockTransfer[]   @relation("TransferFromWarehouse")
+  transfersTo   PosStockTransfer[]   @relation("TransferToWarehouse")
+  adjustments   PosStockAdjustment[]
+  productions   PosProduction[]      @relation("WarehouseProductions")
+
+  @@index([warehouseCode])
+  @@index([outletId])
+  @@map("pos_warehouses")
+}
+
+model PosUnit {
+  unitId      String       @id @default(uuid()) @map("unit_id") @db.Uuid
+  unitCode    String       @unique @map("unit_code") @db.VarChar
+  unitName    String       @map("unit_name") @db.VarChar
+  description String?      @map("description") @db.VarChar
+
+  isActive    String       @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode  String       @default("UNIT") @map("object_code") @db.VarChar
+  createdBy   String?      @map("created_by") @db.VarChar
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @default(now()) @updatedAt @map("updated_at")
+  updatedBy   String?      @map("updated_by") @db.VarChar
+
+  products            PosProduct[]
+  conversionsFrom     PosUnitConversion[]     @relation("UnitConversionFrom")
+  conversionsTo       PosUnitConversion[]     @relation("UnitConversionTo")
+  recipes             PosProductRecipe[]
+  productionTargets   PosProduction[]         @relation("ProductionTargetUnit")
+  productionMaterials PosProductionMaterial[] @relation("ProductionMaterialUnit")
+
+  @@index([unitCode])
+  @@map("pos_units")
+}

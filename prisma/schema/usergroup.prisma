@@ -1,0 +1,19 @@
+// User Group / Role Schema
+// Table: pos_usergroups
+
+model UserGroup {
+  usergroupId   String   @id @default(uuid()) @map("usergroup_id") @db.Uuid
+  usergroupCode String   @unique @map("usergroup_code") @db.VarChar
+  usergroupName String   @map("usergroup_name") @db.VarChar
+  objectCode    String   @default("USERGROUP") @map("object_code") @db.VarChar
+  createdBy     String?  @map("created_by") @db.VarChar
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy     String?  @map("updated_by") @db.VarChar
+
+  users                   User[]
+  permissions             UserPermission[]
+  approvalTemplateDetails ApprovalTemplateDetail[]
+
+  @@map("pos_usergroups")
+}

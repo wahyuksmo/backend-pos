@@ -1,0 +1,31 @@
+// APK Releases & Mobile App Management Schema
+// Table: pos_app_releases
+
+model PosAppRelease {
+  releaseId         String   @id @default(uuid()) @map("release_id") @db.Uuid
+  versionName       String   @map("version_name") @db.VarChar
+  versionCode       Int      @map("version_code") @db.Integer
+  fileName          String   @map("file_name") @db.VarChar
+  originalName      String   @map("original_name") @db.VarChar
+  filePath          String   @map("file_path") @db.VarChar
+  fileSize          BigInt   @default(0) @map("file_size") @db.BigInt
+  fileSizeFormatted String   @default("0 MB") @map("file_size_formatted") @db.VarChar
+  releaseNotes      String?  @map("release_notes") @db.Text
+  downloadCount     Int      @default(0) @map("download_count") @db.Integer
+  isLatest          String   @default("N") @map("is_latest") @db.VarChar(1)
+
+  // Status & Metadata Objek
+  isActive          String   @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode        String   @default("APP_RELEASE") @map("object_code") @db.VarChar
+
+  // Audit Columns
+  createdBy         String?  @map("created_by") @db.VarChar
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy         String?  @map("updated_by") @db.VarChar
+
+  @@index([versionCode])
+  @@index([isLatest])
+  @@index([isActive])
+  @@map("pos_app_releases")
+}

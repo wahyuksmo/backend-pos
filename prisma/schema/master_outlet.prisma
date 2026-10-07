@@ -1,0 +1,85 @@
+// Master Outlet, Register & Table Schema
+// Tables: pos_outlets, pos_registers, pos_dining_tables
+
+model PosOutlet {
+  outletId      String   @id @default(uuid()) @map("outlet_id") @db.Uuid
+  outletCode    String   @unique @map("outlet_code") @db.VarChar
+  outletName    String   @map("outlet_name") @db.VarChar
+  phone         String?  @map("phone") @db.VarChar
+  email         String?  @map("email") @db.VarChar
+  address       String?  @map("address") @db.Text
+  city          String?  @map("city") @db.VarChar
+  province      String?  @map("province") @db.VarChar
+  postalCode    String?  @map("postal_code") @db.VarChar
+  taxNumber     String?  @map("tax_number") @db.VarChar
+  receiptHeader String?  @map("receipt_header") @db.Text
+  receiptFooter String?  @map("receipt_footer") @db.Text
+  isCentral     String   @default("N") @map("is_central") @db.VarChar(1)
+
+  isActive      String   @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode    String   @default("OUTLET") @map("object_code") @db.VarChar
+  createdBy     String?  @map("created_by") @db.VarChar
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy     String?  @map("updated_by") @db.VarChar
+
+  registers       PosRegister[]
+  warehouses      PosWarehouse[]
+  diningTables    PosDiningTable[]
+  outletPrices    PosProductOutletPrice[]
+  kitchenStations PosKitchenStation[]
+  surcharges      PosSurcharge[]
+  shifts          PosRegisterShift[]
+  orders          PosOrder[]
+
+  @@index([outletCode])
+  @@map("pos_outlets")
+}
+
+model PosRegister {
+  registerId   String    @id @default(uuid()) @map("register_id") @db.Uuid
+  outletId     String    @map("outlet_id") @db.Uuid
+  registerCode String    @unique @map("register_code") @db.VarChar
+  registerName String    @map("register_name") @db.VarChar
+  macAddress   String?   @map("mac_address") @db.VarChar
+  ipAddress    String?   @map("ip_address") @db.VarChar
+  notes        String?   @map("notes") @db.VarChar
+
+  isActive     String    @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode   String    @default("REGISTER") @map("object_code") @db.VarChar
+  createdBy    String?   @map("created_by") @db.VarChar
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedBy    String?   @map("updated_by") @db.VarChar
+
+  outlet       PosOutlet          @relation(fields: [outletId], references: [outletId], onDelete: Cascade)
+  shifts       PosRegisterShift[]
+  orders       PosOrder[]
+
+  @@index([outletId])
+  @@map("pos_registers")
+}
+
+model PosDiningTable {
+  tableId    String    @id @default(uuid()) @map("table_id") @db.Uuid
+  outletId   String    @map("outlet_id") @db.Uuid
+  tableCode  String    @map("table_code") @db.VarChar
+  tableName  String    @map("table_name") @db.VarChar
+  section    String?   @map("section") @db.VarChar
+  capacity   Int       @default(4) @map("capacity")
+  status     String    @default("AVAILABLE") @map("status") @db.VarChar
+
+  isActive   String    @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode String    @default("DINING_TABLE") @map("object_code") @db.VarChar
+  createdBy  String?   @map("created_by") @db.VarChar
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedBy  String?   @map("updated_by") @db.VarChar
+
+  outlet     PosOutlet  @relation(fields: [outletId], references: [outletId], onDelete: Cascade)
+  orders     PosOrder[]
+
+  @@unique([outletId, tableCode])
+  @@index([outletId])
+  @@map("pos_dining_tables")
+}

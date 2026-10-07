@@ -1,0 +1,27 @@
+// User Permissions Schema
+// Table: pos_userpermissions
+
+model UserPermission {
+  userpermissionId String   @id @default(uuid()) @map("userpermission_id") @db.Uuid
+  usergroupId      String   @map("usergroup_id") @db.Uuid
+  menuId           String   @map("menu_id") @db.Uuid
+  createPerm       String   @default("N") @map("create_perm") @db.VarChar
+  readPerm         String   @default("N") @map("read_perm") @db.VarChar
+  updatePerm       String   @default("N") @map("update_perm") @db.VarChar
+  deletePerm       String   @default("N") @map("delete_perm") @db.VarChar
+  exportPerm       String   @default("N") @map("export_perm") @db.VarChar
+  importPerm       String   @default("N") @map("import_perm") @db.VarChar
+  objectCode       String   @default("USER_PERMISSION") @map("object_code") @db.VarChar
+  createdBy        String?  @map("created_by") @db.VarChar
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy        String?  @map("updated_by") @db.VarChar
+
+  usergroup UserGroup @relation(fields: [usergroupId], references: [usergroupId], onDelete: Cascade)
+  menu      Menu      @relation(fields: [menuId], references: [menuId], onDelete: Cascade)
+
+  @@unique([usergroupId, menuId])
+  @@index([usergroupId])
+  @@index([menuId])
+  @@map("pos_userpermissions")
+}

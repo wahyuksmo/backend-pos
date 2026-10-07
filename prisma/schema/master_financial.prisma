@@ -1,0 +1,50 @@
+// Master Financial Schema: Payment Methods & Discounts/Promotions
+// Tables: pos_payment_methods, pos_discounts
+
+model PosPaymentMethod {
+  paymentMethodId   String   @id @default(uuid()) @map("payment_method_id") @db.Uuid
+  methodCode        String   @unique @map("method_code") @db.VarChar
+  methodName        String   @map("method_name") @db.VarChar
+  methodType        String   @default("CASH") @map("method_type") @db.VarChar // CASH, EDC_DEBIT, EDC_CREDIT, QRIS, EWALLET, BANK_TRANSFER
+  feeType           String   @default("NONE") @map("fee_type") @db.VarChar // NONE, PERCENTAGE, FIXED
+  feeValue          Decimal  @default(0) @map("fee_value") @db.Decimal(10, 2)
+  requiresReference String   @default("N") @map("requires_reference") @db.VarChar(1)
+  displayOrder      Int      @default(0) @map("display_order")
+
+  isActive          String   @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode        String   @default("PAYMENT_METHOD") @map("object_code") @db.VarChar
+  createdBy         String?  @map("created_by") @db.VarChar
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime          @default(now()) @updatedAt @map("updated_at")
+  updatedBy         String?           @map("updated_by") @db.VarChar
+
+  orderPayments     PosOrderPayment[]
+
+  @@index([methodCode])
+  @@map("pos_payment_methods")
+}
+
+model PosDiscount {
+  discountId       String    @id @default(uuid()) @map("discount_id") @db.Uuid
+  discountCode     String    @unique @map("discount_code") @db.VarChar
+  discountName     String    @map("discount_name") @db.VarChar
+  discountType     String    @default("PERCENTAGE") @map("discount_type") @db.VarChar // PERCENTAGE, FIXED_AMOUNT
+  discountValue    Decimal   @default(0) @map("discount_value") @db.Decimal(15, 2)
+  minPurchase      Decimal   @default(0) @map("min_purchase") @db.Decimal(15, 2)
+  maxDiscount      Decimal?  @map("max_discount") @db.Decimal(15, 2)
+  startDate        DateTime? @map("start_date")
+  endDate          DateTime? @map("end_date")
+  requiresApproval String    @default("N") @map("requires_approval") @db.VarChar(1)
+
+  isActive         String    @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode       String    @default("DISCOUNT") @map("object_code") @db.VarChar
+  createdBy        String?   @map("created_by") @db.VarChar
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedBy        String?   @map("updated_by") @db.VarChar
+
+  orders           PosOrder[]
+
+  @@index([discountCode])
+  @@map("pos_discounts")
+}

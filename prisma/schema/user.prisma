@@ -1,0 +1,34 @@
+// User Account Schema
+// Table: pos_users
+
+model User {
+  userId            String    @id @default(uuid()) @map("user_id") @db.Uuid
+  usergroupId       String?   @map("usergroup_id") @db.Uuid
+  employeeNik       String?   @map("employee_nik") @db.VarChar
+  username          String    @unique @map("username") @db.VarChar
+  fullname          String    @map("fullname") @db.VarChar
+  email             String?   @unique @map("email") @db.VarChar
+  phone             String?   @map("phone") @db.VarChar
+  password          String    @map("password") @db.VarChar
+  activeToken       String?   @map("active_token") @db.VarChar
+  isActive          String    @default("Y") @map("is_active") @db.VarChar
+  isLocked          String    @default("N") @map("is_locked") @db.VarChar
+  needResetPassword String    @default("N") @map("need_reset_password") @db.VarChar
+  passwordExp       DateTime? @map("password_exp") @db.Date
+  objectCode        String    @default("USER") @map("object_code") @db.VarChar
+  createdBy         String?   @map("created_by") @db.VarChar
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedBy         String?   @map("updated_by") @db.VarChar
+
+  usergroup               UserGroup?                  @relation(fields: [usergroupId], references: [usergroupId], onDelete: SetNull)
+  passwordHistories       PasswordHistory[]
+  approvalTemplateDetails ApprovalTemplateDetail[]
+  approvalActionDetails   ApprovalTransactionDetail[] @relation("ApprovalActionByUser")
+  cashierShifts           PosRegisterShift[]
+
+  @@index([usergroupId])
+  @@index([employeeNik])
+  @@index([email])
+  @@map("pos_users")
+}

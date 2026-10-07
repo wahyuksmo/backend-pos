@@ -1,0 +1,25 @@
+// Master Menu Schema
+// Table: pos_menu
+
+model Menu {
+  menuId       String   @id @default(uuid()) @map("menu_id") @db.Uuid
+  pid          String?  @map("pid") @db.Uuid
+  menuName     String   @map("menu_name") @db.VarChar
+  menuTitle    String   @map("menu_title") @db.VarChar
+  menuIcon     String?  @map("menu_icon") @db.VarChar
+  menuUrl      String?  @map("menu_url") @db.VarChar
+  menuPosition Int      @default(0) @map("menu_position")
+  objectCode   String   @default("MENU") @map("object_code") @db.VarChar
+  createdAt    DateTime @default(now()) @map("created_at")
+  createdBy    String?  @map("created_by") @db.VarChar
+  updateAt     DateTime @default(now()) @updatedAt @map("update_at")
+  updatedBy    String?  @map("updated_by") @db.VarChar
+
+  parent        Menu?            @relation("MenuHierarchy", fields: [pid], references: [menuId], onDelete: SetNull)
+  children      Menu[]           @relation("MenuHierarchy")
+  permissions   UserPermission[]
+  systemObjects SystemObject[]
+
+  @@index([pid])
+  @@map("pos_menu")
+}

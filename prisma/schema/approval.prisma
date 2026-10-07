@@ -1,0 +1,102 @@
+// Approval Workflow Schema
+// Tables: pos_approval_template_headers, pos_approval_template_details,
+//         pos_approval_transaction_headers, pos_approval_transaction_details
+
+model ApprovalTemplateHeader {
+  templateId   String   @id @default(uuid()) @map("template_id") @db.Uuid
+  templateCode String   @unique @map("template_code") @db.VarChar
+  templateName String   @map("template_name") @db.VarChar
+  objectCode   String   @map("object_code") @db.VarChar // e.g. SALES_DISCOUNT, VOID_TRANSACTION, PURCHASE_ORDER, CASH_EXPENSE
+  minAmount    Decimal? @map("min_amount") @db.Decimal(15, 2)
+  maxAmount    Decimal? @map("max_amount") @db.Decimal(15, 2)
+  description  String?  @map("description") @db.VarChar
+
+  isActive  String   @default("Y") @map("is_active") @db.VarChar
+  createdBy String?  @map("created_by") @db.VarChar
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy String?  @map("updated_by") @db.VarChar
+
+  details      ApprovalTemplateDetail[]
+  transactions ApprovalTransactionHeader[]
+
+  @@index([objectCode])
+  @@map("pos_approval_template_headers")
+}
+
+model ApprovalTemplateDetail {
+  templateDetailId String  @id @default(uuid()) @map("template_detail_id") @db.Uuid
+  templateId       String  @map("template_id") @db.Uuid
+  stepOrder        Int     @map("step_order")
+  stepName         String  @map("step_name") @db.VarChar
+  approverType     String  @map("approver_type") @db.VarChar // DIRECT_MANAGER, ROLE, SPECIFIC_USER
+  usergroupId      String? @map("usergroup_id") @db.Uuid
+  userId           String? @map("user_id") @db.Uuid
+  canRevise        String  @default("Y") @map("can_revise") @db.VarChar
+
+  objectCode String   @default("APPROVAL_TEMPLATE_DETAIL") @map("object_code") @db.VarChar
+  isActive   String   @default("Y") @map("is_active") @db.VarChar
+  createdBy  String?  @map("created_by") @db.VarChar
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy  String?  @map("updated_by") @db.VarChar
+
+  template  ApprovalTemplateHeader @relation(fields: [templateId], references: [templateId], onDelete: Cascade)
+  usergroup UserGroup?             @relation(fields: [usergroupId], references: [usergroupId], onDelete: SetNull)
+  user      User?                  @relation(fields: [userId], references: [userId], onDelete: SetNull)
+
+  @@unique([templateId, stepOrder])
+  @@index([templateId])
+  @@map("pos_approval_template_details")
+}
+
+model ApprovalTransactionHeader {
+  approvalId  String @id @default(uuid()) @map("approval_id") @db.Uuid
+  templateId  String @map("template_id") @db.Uuid
+  objectCode  String @map("object_code") @db.VarChar
+  objectId    String @map("object_id") @db.Uuid
+  totalSteps  Int    @map("total_steps")
+  currentStep Int    @default(1) @map("current_step")
+  status      String @default("PENDING") @map("status") @db.VarChar // PENDING, APPROVED, REJECTED, REVISED
+
+  isActive  String   @default("Y") @map("is_active") @db.VarChar
+  createdBy String?  @map("created_by") @db.VarChar
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy String?  @map("updated_by") @db.VarChar
+
+  template ApprovalTemplateHeader      @relation(fields: [templateId], references: [templateId], onDelete: Restrict)
+  details  ApprovalTransactionDetail[]
+
+  @@index([objectCode, objectId])
+  @@index([status])
+  @@map("pos_approval_transaction_headers")
+}
+
+model ApprovalTransactionDetail {
+  approvalDetailId String    @id @default(uuid()) @map("approval_detail_id") @db.Uuid
+  approvalId       String    @map("approval_id") @db.Uuid
+  stepOrder        Int       @map("step_order")
+  stepName         String    @map("step_name") @db.VarChar
+  approverType     String    @map("approver_type") @db.VarChar
+  usergroupId      String?   @map("usergroup_id") @db.Uuid
+  assignedUserId   String?   @map("assigned_user_id") @db.Uuid
+  actionByUserId   String?   @map("action_by_user_id") @db.Uuid
+  action           String    @default("PENDING") @map("action") @db.VarChar // PENDING, APPROVED, REJECTED, REVISED
+  notes            String?   @map("notes") @db.Text
+  actionAt         DateTime? @map("action_at")
+
+  objectCode String   @default("APPROVAL_TRANSACTION_DETAIL") @map("object_code") @db.VarChar
+  isActive   String   @default("Y") @map("is_active") @db.VarChar
+  createdBy  String?  @map("created_by") @db.VarChar
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy  String?  @map("updated_by") @db.VarChar
+
+  approval     ApprovalTransactionHeader @relation(fields: [approvalId], references: [approvalId], onDelete: Cascade)
+  actionByUser User?                     @relation("ApprovalActionByUser", fields: [actionByUserId], references: [userId], onDelete: SetNull)
+
+  @@index([approvalId])
+  @@index([action])
+  @@map("pos_approval_transaction_details")
+}

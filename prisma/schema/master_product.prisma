@@ -1,0 +1,227 @@
+// Master Product Catalog Schema
+// Tables: pos_categories, pos_brands, pos_taxes, pos_products, pos_product_variants,
+//         pos_product_outlet_prices, pos_product_modifier_groups, pos_product_modifier_items
+
+model PosCategory {
+  categoryId       String        @id @default(uuid()) @map("category_id") @db.Uuid
+  categoryCode     String        @unique @map("category_code") @db.VarChar
+  categoryName     String        @map("category_name") @db.VarChar
+  parentCategoryId String?       @map("parent_category_id") @db.Uuid
+  icon             String?       @map("icon") @db.VarChar
+  color            String?       @map("color") @db.VarChar
+  displayOrder     Int           @default(0) @map("display_order")
+
+  kitchenStationId String?                   @map("kitchen_station_id") @db.Uuid
+
+  isActive         String                    @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode       String                    @default("CATEGORY") @map("object_code") @db.VarChar
+  createdBy        String?                   @map("created_by") @db.VarChar
+  createdAt        DateTime                  @default(now()) @map("created_at")
+  updatedAt        DateTime                  @default(now()) @updatedAt @map("updated_at")
+  updatedBy        String?                   @map("updated_by") @db.VarChar
+
+  parentCategory   PosCategory?              @relation("CategoryHierarchy", fields: [parentCategoryId], references: [categoryId], onDelete: SetNull)
+  childCategories  PosCategory[]             @relation("CategoryHierarchy")
+  products         PosProduct[]
+  kitchenStation   PosKitchenStation?        @relation(fields: [kitchenStationId], references: [stationId], onDelete: SetNull)
+
+  @@index([categoryCode])
+  @@index([parentCategoryId])
+  @@map("pos_categories")
+}
+
+model PosBrand {
+  brandId     String       @id @default(uuid()) @map("brand_id") @db.Uuid
+  brandCode   String       @unique @map("brand_code") @db.VarChar
+  brandName   String       @map("brand_name") @db.VarChar
+  description String?      @map("description") @db.VarChar
+
+  isActive    String       @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode  String       @default("BRAND") @map("object_code") @db.VarChar
+  createdBy   String?      @map("created_by") @db.VarChar
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @default(now()) @updatedAt @map("updated_at")
+  updatedBy   String?      @map("updated_by") @db.VarChar
+
+  products    PosProduct[]
+
+  @@index([brandCode])
+  @@map("pos_brands")
+}
+
+model PosTax {
+  taxId       String       @id @default(uuid()) @map("tax_id") @db.Uuid
+  taxCode     String       @unique @map("tax_code") @db.VarChar
+  taxName     String       @map("tax_name") @db.VarChar
+  rate        Decimal      @default(0) @map("rate") @db.Decimal(5, 2)
+  isInclusive String       @default("N") @map("is_inclusive") @db.VarChar(1)
+  description String?      @map("description") @db.VarChar
+
+  isActive    String       @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode  String       @default("TAX") @map("object_code") @db.VarChar
+  createdBy   String?      @map("created_by") @db.VarChar
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @default(now()) @updatedAt @map("updated_at")
+  updatedBy   String?      @map("updated_by") @db.VarChar
+
+  products    PosProduct[]
+
+  @@index([taxCode])
+  @@map("pos_taxes")
+}
+
+model PosProduct {
+  productId          String                    @id @default(uuid()) @map("product_id") @db.Uuid
+  productCode        String                    @unique @map("product_code") @db.VarChar
+  barcode            String?                   @map("barcode") @db.VarChar
+  sku                String?                   @unique @map("sku") @db.VarChar
+  productName        String                    @map("product_name") @db.VarChar
+  productType        String                    @default("STANDARD") @map("product_type") @db.VarChar
+  categoryId         String?                   @map("category_id") @db.Uuid
+  brandId            String?                   @map("brand_id") @db.Uuid
+  unitId             String?                   @map("unit_id") @db.Uuid
+  taxId              String?                   @map("tax_id") @db.Uuid
+  kitchenStationId   String?                   @map("kitchen_station_id") @db.Uuid
+
+  costPrice          Decimal                   @default(0) @map("cost_price") @db.Decimal(15, 2)
+  sellingPrice       Decimal                   @default(0) @map("selling_price") @db.Decimal(15, 2)
+  minStock           Decimal                   @default(0) @map("min_stock") @db.Decimal(12, 2)
+  maxStock           Decimal                   @default(0) @map("max_stock") @db.Decimal(12, 2)
+
+  isInventoryTracked String                    @default("Y") @map("is_inventory_tracked") @db.VarChar(1)
+  isForSale          String                    @default("Y") @map("is_for_sale") @db.VarChar(1)
+  imageUrl           String?                   @map("image_url") @db.VarChar
+  description        String?                   @map("description") @db.Text
+
+  isActive           String                    @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode         String                    @default("PRODUCT") @map("object_code") @db.VarChar
+  createdBy          String?                   @map("created_by") @db.VarChar
+  createdAt          DateTime                  @default(now()) @map("created_at")
+  updatedAt          DateTime                  @default(now()) @updatedAt @map("updated_at")
+  updatedBy          String?                   @map("updated_by") @db.VarChar
+
+  category           PosCategory?              @relation(fields: [categoryId], references: [categoryId], onDelete: SetNull)
+  brand              PosBrand?                 @relation(fields: [brandId], references: [brandId], onDelete: SetNull)
+  unit               PosUnit?                  @relation(fields: [unitId], references: [unitId], onDelete: SetNull)
+  tax                PosTax?                   @relation(fields: [taxId], references: [taxId], onDelete: SetNull)
+  kitchenStation     PosKitchenStation?        @relation(fields: [kitchenStationId], references: [stationId], onDelete: SetNull)
+
+  variants             PosProductVariant[]
+  outletPrices         PosProductOutletPrice[]
+  modifierGroups       PosProductModifierGroup[]
+  recipesAsProduct     PosProductRecipe[]        @relation("ProductRecipeParent")
+  recipesAsIngredient  PosProductRecipe[]        @relation("ProductRecipeIngredient")
+  comboGroups          PosComboGroup[]
+  comboItems           PosComboItem[]
+  orderItems           PosOrderItem[]
+  stocks               PosStock[]
+  stockMovements       PosStockMovement[]
+  transferItems        PosStockTransferItem[]
+  adjustmentItems      PosStockAdjustmentItem[]
+  productionsAsTarget  PosProduction[]           @relation("ProductionTargetProduct")
+  productionsAsMaterial PosProductionMaterial[]   @relation("ProductionMaterialProduct")
+
+  @@index([productCode])
+  @@index([barcode])
+  @@index([sku])
+  @@index([categoryId])
+  @@map("pos_products")
+}
+
+model PosProductVariant {
+  variantId    String                  @id @default(uuid()) @map("variant_id") @db.Uuid
+  productId    String                  @map("product_id") @db.Uuid
+  variantCode  String                  @unique @map("variant_code") @db.VarChar
+  variantName  String                  @map("variant_name") @db.VarChar
+  sku          String?                 @unique @map("sku") @db.VarChar
+  barcode      String?                 @map("barcode") @db.VarChar
+  costPrice    Decimal                 @default(0) @map("cost_price") @db.Decimal(15, 2)
+  sellingPrice Decimal                 @default(0) @map("selling_price") @db.Decimal(15, 2)
+
+  isActive     String                  @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode   String                  @default("PRODUCT_VARIANT") @map("object_code") @db.VarChar
+  createdBy    String?                 @map("created_by") @db.VarChar
+  createdAt    DateTime                @default(now()) @map("created_at")
+  updatedAt    DateTime                @default(now()) @updatedAt @map("updated_at")
+  updatedBy    String?                 @map("updated_by") @db.VarChar
+
+  product      PosProduct              @relation(fields: [productId], references: [productId], onDelete: Cascade)
+  outletPrices PosProductOutletPrice[]
+  recipes      PosProductRecipe[]
+  comboItems   PosComboItem[]
+  orderItems   PosOrderItem[]
+  stocks       PosStock[]
+  stockMovements PosStockMovement[]
+  transferItems PosStockTransferItem[]
+  adjustmentItems PosStockAdjustmentItem[]
+  productionsAsTarget PosProduction[]           @relation("ProductionTargetVariant")
+  productionsAsMaterial PosProductionMaterial[] @relation("ProductionMaterialVariant")
+
+  @@index([productId])
+  @@index([barcode])
+  @@map("pos_product_variants")
+}
+
+model PosProductOutletPrice {
+  priceId      String             @id @default(uuid()) @map("price_id") @db.Uuid
+  productId    String             @map("product_id") @db.Uuid
+  variantId    String?            @map("variant_id") @db.Uuid
+  outletId     String             @map("outlet_id") @db.Uuid
+  sellingPrice Decimal            @map("selling_price") @db.Decimal(15, 2)
+
+  isActive     String             @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode   String             @default("PRODUCT_PRICE") @map("object_code") @db.VarChar
+  createdBy    String?            @map("created_by") @db.VarChar
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @default(now()) @updatedAt @map("updated_at")
+  updatedBy    String?            @map("updated_by") @db.VarChar
+
+  product      PosProduct         @relation(fields: [productId], references: [productId], onDelete: Cascade)
+  variant      PosProductVariant? @relation(fields: [variantId], references: [variantId], onDelete: Cascade)
+  outlet       PosOutlet          @relation(fields: [outletId], references: [outletId], onDelete: Cascade)
+
+  @@unique([productId, variantId, outletId])
+  @@index([outletId])
+  @@map("pos_product_outlet_prices")
+}
+
+model PosProductModifierGroup {
+  modifierGroupId String                   @id @default(uuid()) @map("modifier_group_id") @db.Uuid
+  productId       String                   @map("product_id") @db.Uuid
+  groupName       String                   @map("group_name") @db.VarChar
+  minSelect       Int                      @default(0) @map("min_select")
+  maxSelect       Int                      @default(1) @map("max_select")
+  isRequired      String                   @default("N") @map("is_required") @db.VarChar(1)
+
+  isActive        String                   @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode      String                   @default("MODIFIER_GROUP") @map("object_code") @db.VarChar
+  createdBy       String?                  @map("created_by") @db.VarChar
+  createdAt       DateTime                 @default(now()) @map("created_at")
+  updatedAt       DateTime                 @default(now()) @updatedAt @map("updated_at")
+  updatedBy       String?                  @map("updated_by") @db.VarChar
+
+  product         PosProduct               @relation(fields: [productId], references: [productId], onDelete: Cascade)
+  items           PosProductModifierItem[]
+
+  @@index([productId])
+  @@map("pos_product_modifier_groups")
+}
+
+model PosProductModifierItem {
+  modifierItemId  String                  @id @default(uuid()) @map("modifier_item_id") @db.Uuid
+  modifierGroupId String                  @map("modifier_group_id") @db.Uuid
+  itemName        String                  @map("item_name") @db.VarChar
+  extraPrice      Decimal                 @default(0) @map("extra_price") @db.Decimal(15, 2)
+
+  isActive        String                  @default("Y") @map("is_active") @db.VarChar(1)
+  objectCode      String                  @default("MODIFIER_ITEM") @map("object_code") @db.VarChar
+  createdBy       String?                 @map("created_by") @db.VarChar
+  createdAt       DateTime                @default(now()) @map("created_at")
+  updatedAt       DateTime                @default(now()) @updatedAt @map("updated_at")
+  updatedBy       String?                 @map("updated_by") @db.VarChar
+
+  modifierGroup   PosProductModifierGroup @relation(fields: [modifierGroupId], references: [modifierGroupId], onDelete: Cascade)
+
+  @@index([modifierGroupId])
+  @@map("pos_product_modifier_items")
+}
